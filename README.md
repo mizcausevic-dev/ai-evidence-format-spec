@@ -1,5 +1,8 @@
 # AI Evidence Format
 
+[![Validate examples](https://github.com/mizcausevic-dev/ai-evidence-format-spec/actions/workflows/validate.yml/badge.svg)](https://github.com/mizcausevic-dev/ai-evidence-format-spec/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 A draft specification for **machine-readable evidence objects** that travel with every claim an answer engine produces.
 
 When an LLM says *"Cambridge is in Massachusetts, source: en.wikipedia.org/wiki/Cambridge,_Massachusetts"*, the answer is two things: the **claim** and the **evidence**. Today the evidence is unstructured — a URL, maybe a quoted span, maybe nothing. The AI Evidence Format makes it structured: source identity, span selector, retrieval confidence, freshness, content hash, and a declared synthesis role.
