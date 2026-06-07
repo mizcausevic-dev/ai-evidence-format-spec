@@ -3,7 +3,7 @@
 **Status:** Draft
 **Version:** 0.1.1
 **Editor:** Miz Causevic
-**License:** AGPL-3.0 (this document, schema, and examples). Implementations are unrestricted.
+**License:** MIT — the specification text, schema, and examples may be freely implemented, extended, and redistributed with attribution. Reference implementations (such as [mcp-kinetic-gain](https://github.com/mizcausevic-dev/mcp-kinetic-gain)) are licensed separately under AGPL-3.0.
 
 RFC 2119 keywords apply throughout.
 

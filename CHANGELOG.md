@@ -9,6 +9,7 @@ All notable changes to this project are documented here.
 - Defined the exact whitespace set (Unicode `White_Space`; U+200B ZERO WIDTH SPACE preserved) and stated the verifier rule `content_hash == sha256(C(span.exact_text))`, noting `C` is idempotent so producers may store already-canonical `exact_text`.
 - Added **§5.1.1** declaring Unicode NFC normalization **RECOMMENDED** (not required) for v0.1, because some runtimes lack a normalizer by default (e.g. PHP's `intl` extension on shared hosts); flagged NFC as a candidate `MUST` for a future version.
 - Added **§5.3 test vectors** — three SHA-256 vectors reproducible with any tool (`printf … | sha256sum`) and cross-checked against the WordPress reference implementation, plus an informative NFC example.
+- Aligned the `SPEC.md` license header with the repository's MIT license (spec text, schema, and examples are MIT; reference implementations remain AGPL-3.0).
 
 ### Made verifiable
 - Replaced the placeholder `content_hash` values in all three `examples/` documents with real digests computed by the §5.1 rules, so each example is now an independently verifiable Level 2 ("Verify") object.
