@@ -22,7 +22,7 @@
     "retriever_id": "kinetic-rag-v3"
   },
   "verification": {
-    "content_hash": "sha256:d8e2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2"
+    "content_hash": "sha256:454ea0f86f89d62705772a8245808d3676c2b3d3d770134c41a5d1e0b3cab80e"
   },
   "synthesis_role": "contradicting",
   "notes": "The RFC defines robots.txt as a crawl-control mechanism. Public discourse conflates it with training-data permission, but the spec does not support that interpretation."

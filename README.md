@@ -40,7 +40,7 @@ The format **reuses** Schema.org wherever it fits, but it is not a subset of any
 ## Quickstart
 
 1. For each claim your answer engine produces, build one or more evidence objects conforming to [`evidence.schema.json`](evidence.schema.json).
-2. Compute a `content_hash` over the canonicalized bytes of the cited span. (See §5 of [`SPEC.md`](SPEC.md) for the canonicalization rules.)
+2. Compute a `content_hash` over the canonical text of the cited span. (See §5.1 of [`SPEC.md`](SPEC.md) for the canonicalization rules and reproducible test vectors.)
 3. Either embed the evidence inline in your answer payload, or publish it at a URI and reference it.
 4. Pair with an [AEO Protocol](https://github.com/mizcausevic-dev/aeo-protocol-spec) declaration on the source origin to give consumers an authoritative anchor.
 
