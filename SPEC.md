@@ -1,7 +1,7 @@
 # AI Evidence Format v0.1 — Specification
 
 **Status:** Draft
-**Version:** 0.1.0
+**Version:** 0.1.1
 **Editor:** Miz Causevic
 **License:** AGPL-3.0 (this document, schema, and examples). Implementations are unrestricted.
 
@@ -42,7 +42,7 @@ Evidence objects **MAY** be embedded inline in the answer payload or referenced 
 
 ### 3.2 Verify
 
-Every evidence object **MUST** include a `verification.content_hash` over the canonicalized bytes of the cited span. Consumers **MAY** fetch the source independently and recompute the hash to confirm what the model actually used.
+Every evidence object **MUST** include a `verification.content_hash` over the canonical text of the cited span (§5.1). Consumers **MAY** fetch the source independently, re-apply the canonicalization, and recompute the hash to confirm what the model actually used.
 
 Evidence objects **MAY** additionally include `verification.signature` — a JWS signed by the retrieval pipeline or the source publisher. Signatures are advisory; their absence does not invalidate the evidence.
 
@@ -107,7 +107,7 @@ The exact text of the claim the evidence accompanies. Quoted verbatim from the s
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `content_hash` | string | yes | `sha256:<hex>` of the canonicalized span bytes. See §5. |
+| `content_hash` | string | yes | `sha256:<hex>` of the canonical span text. See §5.1. |
 | `signature` | string | no | Detached JWS over the canonical JSON form of the rest of the document. |
 | `signing_key_uri` | URI | no | Location of the JWK used to sign. |
 | `signed_by` | string | no | Identifier of the signer (retrieval pipeline, source publisher, etc.). |
@@ -122,22 +122,58 @@ Free-form notes from the answer engine — e.g. "Source contradicts X but is the
 
 ## 5. Canonicalization rules
 
-For `content_hash`:
+### 5.1 `content_hash`
 
-1. Read the span content as UTF-8.
-2. Normalize line endings to LF (`\n`).
-3. Strip a single trailing newline.
-4. Compute SHA-256.
-5. Encode as lowercase hex, prefixed `sha256:`.
+`verification.content_hash` is the string `sha256:` followed by the lowercase hexadecimal SHA-256 digest of the **canonical text of the cited span**.
+
+The canonical text is produced by applying the following steps, in order, to the span content:
+
+1. **Decode as UTF-8.** Treat the span content as a UTF-8 string.
+2. **Resolve character references.** When the span was extracted from a markup source (HTML/XML), decode character references so the hash is over readable text rather than escapes — at minimum the five predefined XML entities (`&amp;` `&lt;` `&gt;` `&quot;` `&apos;`) and their numeric equivalents (`&#38;` and so on). For plain-text or JSON sources there is nothing to decode and this step is a no-op. Implementations **MUST NOT** expand the broader HTML named-entity set at this step (e.g. `&nbsp;` is left intact), so the result is deterministic across runtimes.
+3. **Collapse whitespace.** Replace every maximal run of Unicode `White_Space` characters with a single U+0020 SPACE.
+4. **Trim.** Remove leading and trailing U+0020 (equivalently, trim the surrounding whitespace produced by step 3).
+5. **Normalize residual line endings (legacy).** Convert any remaining CRLF or CR to LF and strip one trailing LF. After steps 3–4 this is inert; it is retained so that implementations which hash lightly-processed text still converge on the same digest.
+6. **Hash.** Compute SHA-256 over the UTF-8 bytes of the canonical text, encode as lowercase hex, and prefix `sha256:`.
+
+Call the steps 1–5 transform `C`. A verifier **MUST** be able to reproduce the digest as `sha256:` + hex( SHA-256( UTF-8( C(`span.exact_text`) ) ) ). `C` is **idempotent** — `C(C(x)) == C(x)` — so a producer **MAY** instead store the already-canonical string in `span.exact_text`, in which case the verifier's `C` is a no-op and the digest is simply `sha256:` + hex( SHA-256( UTF-8(`span.exact_text`) ) ). The hash is taken over the **text**, never over surrounding markup, the JSON document, or any selector value.
+
+> **Self-quoting evidence.** When a claim is its own span — a publisher disclosing the provenance of text it authored, rather than citing an external source — `claim_text` and `span.exact_text` hold the same canonical string and either **MAY** be used as the hash input. The WordPress reference implementation ([ai-evidence-block](https://github.com/mizcausevic-dev/ai-evidence-block)) operates in this mode.
+
+> **The `White_Space` set (step 3).** "Unicode `White_Space`" means the code points carrying the Unicode `White_Space` property: U+0009–U+000D, U+0020, U+0085, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F, U+3000. This **includes** the no-break space (U+00A0), the em space (U+2003), and the line/paragraph separators, and **excludes** U+200B ZERO WIDTH SPACE (Unicode category `Cf`, not whitespace), which is preserved. A regex `\s` in Unicode mode (e.g. PCRE2 `/\s/u`) matches exactly this set; engines whose default `\s` is ASCII-only **MUST** widen it to the set above.
+
+#### 5.1.1 Unicode normalization (NFC) — RECOMMENDED
+
+Producers **SHOULD** apply Unicode Normalization Form C (NFC) to the canonical text before step 6. Without it, visually identical text in different normalization forms hashes differently — for example `café` written with a precomposed U+00E9 versus `e` + combining acute U+0301 (worked example in §5.3).
+
+NFC is **RECOMMENDED but not REQUIRED** in v0.1. Some runtimes do not ship a Unicode normalizer in their default install — PHP's `Normalizer` requires the `intl` extension, which is absent on many shared hosts — so mandating NFC would make conformance host-dependent. A future spec version is expected to promote NFC to a **MUST** once a portable fallback is specified. Until then:
+
+- A producer that can normalize **SHOULD** emit NFC text; the `span.exact_text` / `claim_text` it publishes is then also NFC.
+- A verifier that sees a hash mismatch **SHOULD** apply NFC to both sides before concluding the content differs, since the difference may be normalization form alone.
+
+### 5.2 Signed objects
 
 For signed evidence objects, the JWS signs the *canonical JSON form* of the document with `verification.signature` and `verification.signing_key_uri` omitted. Canonical JSON is defined as RFC 8785 (JSON Canonicalization Scheme, JCS).
+
+### 5.3 Test vectors
+
+Each vector lists the raw span input, the canonical text after §5.1 steps 1–5, and the resulting `content_hash`. All three use pure ASCII / basic-entity input, so they reproduce with any SHA-256 tool — e.g. `printf '%s' '<canonical text>' | sha256sum` — independent of language or the reference implementation.
+
+| # | Raw span input | Canonical text | `content_hash` |
+|---|---|---|---|
+| 1 | `·· The·· sky⇥is⏎blue. ··` — leading/trailing spaces, doubled spaces, a tab (`⇥`) and a newline (`⏎`), shown here as `·` `⇥` `⏎` | `The sky is blue.` | `sha256:52ae4fd504d855f1dd094ab54e2da8402c96250ef75ef775a3cf20ff39d0cb2b` |
+| 2 | `Tom &amp; Jerry said &quot;hi&quot;` | `Tom & Jerry said "hi"` | `sha256:7b1677fdf0e83117a316f9958946440011ec6cf9920c9ef4dad97562b6781103` |
+| 3 | `The Eiffel Tower is 330 metres tall.` | (unchanged) | `sha256:22d55b4f4a196374a8444337fc5005edc190b7724912c00e0ecf7b5c22201e67` |
+
+> **NFC example (informative).** The string `café` yields a different digest depending on normalization form: precomposed (`caf` + U+00E9) → `sha256:850f7dc43910ff890f8879c0ed26fe697c93a067ad93a7d50f466a7028a9bf4e`; decomposed (`cafe` + U+0301) → `sha256:81ef060bcd98adc7824eb5c1ada83c32491b16018e11e79f00ab9d09e04b015a`. Applying NFC (§5.1.1) makes both produce the precomposed digest. Illustrative only; not a v0.1 conformance requirement.
+
+The reference implementation's `includes/class-claim.php::normalize_text()` and `includes/helpers.php::content_hash()` implement §5.1, and every `content_hash` in [`examples/`](examples/) is computed by these rules.
 
 ## 6. Conformance levels
 
 | Level | Requirements |
 |---|---|
 | **Level 1 — Attach** | Schema-valid document with all required fields. |
-| **Level 2 — Verify** | Level 1, plus `verification.content_hash` is reproducible — a consumer fetching the source can recompute the hash and match. |
+| **Level 2 — Verify** | Level 1, plus `verification.content_hash` is reproducible — a consumer fetching the source and applying §5.1 canonicalization can recompute the hash and match. |
 | **Level 3 — Sign** | Level 2, plus `verification.signature` is a valid JWS over the canonical form. |
 
 ## 7. Security and privacy considerations

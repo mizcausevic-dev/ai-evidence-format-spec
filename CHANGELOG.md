@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here.
 
+## [1.0.1] - 2026-06-07
+
+### Specified
+- Rewrote **SPEC.md §5** into a normative, reproducible `content_hash` canonicalization: decode character references on markup sources → collapse runs of Unicode `White_Space` to a single space → trim → SHA-256 → lowercase hex with a `sha256:` prefix. The previous §5 described only line-ending normalization, which diverged from how conforming implementations actually hash text.
+- Defined the exact whitespace set (Unicode `White_Space`; U+200B ZERO WIDTH SPACE preserved) and stated the verifier rule `content_hash == sha256(C(span.exact_text))`, noting `C` is idempotent so producers may store already-canonical `exact_text`.
+- Added **§5.1.1** declaring Unicode NFC normalization **RECOMMENDED** (not required) for v0.1, because some runtimes lack a normalizer by default (e.g. PHP's `intl` extension on shared hosts); flagged NFC as a candidate `MUST` for a future version.
+- Added **§5.3 test vectors** — three SHA-256 vectors reproducible with any tool (`printf … | sha256sum`) and cross-checked against the WordPress reference implementation, plus an informative NFC example.
+
+### Made verifiable
+- Replaced the placeholder `content_hash` values in all three `examples/` documents with real digests computed by the §5.1 rules, so each example is now an independently verifiable Level 2 ("Verify") object.
+
+### Why this mattered
+- The content hash is the spec's trust primitive. A canonicalization a third party cannot reproduce — or examples carrying invented digests — quietly breaks the "Verify" pillar. This revision makes "recompute the hash and match" hold end to end, against both `sha256sum` and the reference implementation.
+
 ## [1.0.0] - 2026-05-12
 
 ### Released

@@ -21,7 +21,7 @@
     "retriever_id": "kinetic-rag-v3"
   },
   "verification": {
-    "content_hash": "sha256:e9f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3"
+    "content_hash": "sha256:d2349f4359539a35ed022f3f36df1b3d33181b051ee29ce9e8805771d78358dc"
   },
   "synthesis_role": "supporting",
   "notes": "AEO-declared self-attestation. Entity-grounded via the well-known URI."
