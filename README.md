@@ -44,9 +44,12 @@ The format **reuses** Schema.org wherever it fits, but it is not a subset of any
 3. Either embed the evidence inline in your answer payload, or publish it at a URI and reference it.
 4. Pair with an [AEO Protocol](https://github.com/mizcausevic-dev/aeo-protocol-spec) declaration on the source origin to give consumers an authoritative anchor.
 
-## Reference implementation
+## Reference implementations
 
-[**ai-evidence-block**](https://github.com/mizcausevic-dev/ai-evidence-block) is the WordPress reference implementation — a Gutenberg block and inline format that emit spec-valid AI Evidence objects (with a reproducible `content_hash` per §5.1) straight from the editor, alongside a schema.org `CreativeWork` graph. Its emitted objects validate against [`evidence.schema.json`](evidence.schema.json).
+Two implementations emit spec-valid objects whose `content_hash` is byte-identical (via the §5.1 canonicalization) and which validate against [`evidence.schema.json`](evidence.schema.json):
+
+- [**ai-evidence-block**](https://github.com/mizcausevic-dev/ai-evidence-block) — **WordPress**: a Gutenberg block + inline format that mark per-claim provenance from the editor, rendering an evidence card + schema.org `CreativeWork` JSON-LD + the evidence object.
+- [**ai-evidence-webflow**](https://github.com/mizcausevic-dev/ai-evidence-webflow) — **Webflow**: a zero-dependency drop-in library driven by `data-aeb-*` attributes (set in the Designer or bound to CMS fields), emitting the same three outputs client-side. [Live demo](https://mizcausevic-dev.github.io/ai-evidence-webflow/demo/).
 
 ## Files in this repo
 
