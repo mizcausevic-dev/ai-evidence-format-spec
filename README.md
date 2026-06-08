@@ -44,6 +44,10 @@ The format **reuses** Schema.org wherever it fits, but it is not a subset of any
 3. Either embed the evidence inline in your answer payload, or publish it at a URI and reference it.
 4. Pair with an [AEO Protocol](https://github.com/mizcausevic-dev/aeo-protocol-spec) declaration on the source origin to give consumers an authoritative anchor.
 
+## Reference implementation
+
+[**ai-evidence-block**](https://github.com/mizcausevic-dev/ai-evidence-block) is the WordPress reference implementation — a Gutenberg block and inline format that emit spec-valid AI Evidence objects (with a reproducible `content_hash` per §5.1) straight from the editor, alongside a schema.org `CreativeWork` graph. Its emitted objects validate against [`evidence.schema.json`](evidence.schema.json).
+
 ## Files in this repo
 
 - [`SPEC.md`](SPEC.md) — full v0.1 specification
