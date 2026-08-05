@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/mizcausevic-dev/ai-evidence-format-spec/blob/main/evidence.schema.json",
+  "$id": "https://kineticgain.com/protocol/evidence.schema.json",
   "title": "AI Evidence Object",
   "description": "Schema for an AI Evidence object — a structured citation that travels with a claim produced by an LLM-based answer engine.",
   "type": "object",
